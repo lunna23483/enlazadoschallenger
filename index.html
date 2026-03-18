@@ -16,20 +16,26 @@ gtag('config', 'G-Y5WC0FBFZZ');
 </script>
 
 <style>
+html, body {
+    margin:0;
+    padding:0;
+    height:100%;
+    font-family:'Segoe UI';
+}
+
 body {
     display:flex;
     justify-content:center;
     align-items:center;
-    height:100vh;
-    margin:0;
-    font-family:'Segoe UI';
+    min-height:100vh;
+    padding:10px;
     background: linear-gradient(to top, #4facfe, #00f2fe);
     color:white;
     text-align:center;
 }
 
 #gameBox {
-    width:90%;
+    width:100%;
     max-width:420px;
     padding:20px;
     border-radius:20px;
@@ -37,8 +43,13 @@ body {
     backdrop-filter:blur(10px);
 }
 
+#level {
+    font-size:18px;
+    margin-bottom:10px;
+}
+
 #word {
-    font-size:8vw;
+    font-size: clamp(28px, 5vw, 42px);
     letter-spacing:10px;
     margin:20px 0;
 }
@@ -47,17 +58,17 @@ body {
     display:flex;
     flex-wrap:wrap;
     justify-content:center;
+    max-width:320px;
+    margin:auto;
 }
 
 .letters button {
-    width:12vw;
-    height:12vw;
-    max-width:55px;
-    max-height:55px;
+    width: clamp(40px, 8vw, 55px);
+    height: clamp(40px, 8vw, 55px);
     margin:5px;
     border:none;
     border-radius:10px;
-    font-size:5vw;
+    font-size: clamp(18px, 3vw, 26px);
     cursor:pointer;
     background:white;
     color:#333;
@@ -71,6 +82,7 @@ body {
     margin-top:15px;
     border-radius:10px;
     background:rgba(255,255,255,0.2);
+    overflow:hidden;
 }
 
 #bar {
@@ -259,7 +271,7 @@ function finDelJuego() {
     resultDiv.innerHTML = "🏆 ¡Completaste todos los niveles!";
     lanzarMonedas();
 
-    // 🚀 EVENTO FINAL IMPORTANTE
+    // 🚀 EVENTO FINAL
     gtag('event', 'juego_terminado', {
         niveles: levels.length,
         monedas_finales: coins
