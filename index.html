@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Reto Enlazado</title>
+
+<!-- 🔥 GOOGLE ANALYTICS -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-Y5WC0FBFZZ"></script>
+<script>
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-Y5WC0FBFZZ');
+</script>
+
+<style>
+body {
+    margin: 0;
+    font-family: 'Segoe UI';
+    background: linear-gradient(to top, #4facfe, #00f2fe);
+    text-align: center;
+    color: white;
+    overflow-x: hidden;
+}
+
+#gameBox {
+    margin: 30px auto;
+    width: 90%;
+    max-width: 400px;
+    background: rgba(255,255,255,0.1);
+    padding: 20px;
+    border-radius: 20px;
+    backdrop-filter: blur(10px);
+}
+
+#word {
+    font-size: 32px;
+    letter-spacing: 12px;
+    margin: 20px 0;
+}
+
+.letters {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.letters button {
+    width: 45px;
+    height: 45px;
+    margin: 5px;
+    border: none;
+    border-radius: 10px;
+    font-size: 18px;
+    cursor: pointer;
+    background: white;
+    color: #333;
+}
+
+.correct { background: #4CAF50 !important; color: white; }
+.wrong { background: #f44336 !important; color: white; }
+
+#coins {
+    font-size: 20px;
+    margin-top: 10px;
+}
+
+#level {
+    margin-top: 10px;
+    font-size: 16px;
+}
+
+/* 💰 MONEDAS */
+.coin {
+    position: fixed;
+    top: -50px;
+    font-size: 24px;
+    animation: fall linear forwards;
+}
+
+@keyframes fall {
+    to {
+        transform: translateY(100vh);
+        opacity: 0;
+    }
+}
+</style>
+
+</head>
+
+<body>
+
+<h2>🎮 Reto Enlazado</h2>
+
+<div id="gameBox">
+    <div id="level">Nivel 1</div>
+    <div id="word"></div>
+    <div class="letters" id="letters"></div>
+    <div id="coins">🪙 0</div>
+</div>
+
+<script>
+const words = ["CASCO", "ARNES", "BOTAS", "GUANTES", "CHALECO"];
+let currentIndex = 0;
+
+let word = words[currentIndex];
+let hidden = [];
+let coins = 0;
+
+const wordDiv = document.getElementById("word");
+const lettersDiv = document.getElementById("letters");
+const coinsDiv = document.getElementById("coins");
+const levelDiv = document.getElementById("level");
+
+function startWord() {
+    word = words[currentIndex];
+    hidden = Array(word.length).fill("_");
+    lettersDiv.innerHTML = "";
+    renderWord();
+    createLetters();
+    levelDiv.innerText = "Nivel " + (currentIndex + 1);
+
+    // 📊 Evento inicio nivel
+    gtag('event', 'nivel_inicio', {
+        nivel: currentIndex + 1
+    });
+}
+
+function renderWord() {
+    wordDiv.innerText = hidden.join(" ");
+}
+
+function createLetters() {
+    const alphabet = "ABCDEFGHIJKLMNÑOPQRSTUVWXYZ";
+
+    alphabet.split("").forEach(letter => {
+        const btn = document.createElement("button");
+        btn.innerText = letter;
+
+        btn.onclick = () => checkLetter(letter, btn);
+
+        lettersDiv.appendChild(btn);
+    });
+}
+
+/* 💰 LLUVIA DE MONEDAS */
+function dropCoins() {
+    for (let i = 0; i < 20; i++) {
+        let coin = document.createElement("div");
+        coin.innerText = "🪙";
+        coin.classList.add("coin");
+
+        coin.style.left = Math.random() * 100 + "vw";
+        coin.style.animationDuration = (Math.random() * 2 + 1) + "s";
+
+        document.body.appendChild(coin);
+
+        setTimeout(() => coin.remove(), 3000);
+    }
+}
+
+function checkLetter(letter, btn) {
+    btn.disabled = true;
+    let correct = false;
+
+    for (let i = 0; i < word.length; i++) {
+        if (word[i] === letter && hidden[i] === "_") {
+            hidden[i] = letter;
+            correct = true;
+        }
+    }
+
+    if (correct) {
+        btn.classList.add("correct");
+        coins += 2;
+
+        // 📊 Evento letra correcta
+        gtag('event', 'letra_correcta', {
+            letra: letter
+        });
+
+    } else {
+        btn.classList.add("wrong");
+    }
+
+    renderWord();
+    coinsDiv.innerText = "🪙 " + coins;
+
+    if (hidden.join("") === word) {
+        coins += 10;
+        coinsDiv.innerText = "🪙 " + coins;
+
+        dropCoins();
+
+        // 📊 Evento nivel completado
+        gtag('event', 'nivel_completado', {
+            nivel: currentIndex + 1,
+            monedas: coins
+        });
+
+        setTimeout(() => {
+            nextWord();
+        }, 1200);
+    }
+}
+
+function nextWord() {
+    currentIndex++;
+
+    if (currentIndex >= words.length) {
+
+        // 📊 Evento juego terminado
+        gtag('event', 'juego_terminado', {
+            monedas_totales: coins
+        });
+
+        alert("🏆 Terminaste! Total monedas: " + coins);
+        currentIndex = 0;
+        coins = 0;
+    }
+
+    startWord();
+}
+
+startWord();
+</script>
+
+</body>
+</html>
