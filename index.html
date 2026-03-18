@@ -20,8 +20,6 @@ gtag('config', 'G-Y5WC0FBFZZ', {
 </script>
 
 <style>
-
-/* ===== RESET Y BASE ===== */
 html, body {
     height: 100%;
     margin: 0;
@@ -37,7 +35,6 @@ body {
     text-align: center;
 }
 
-/* ===== CONTENEDOR ===== */
 #gameBox {
     width: 90%;
     max-width: 420px;
@@ -45,12 +42,6 @@ body {
     border-radius: 20px;
     background: rgba(255,255,255,0.1);
     backdrop-filter: blur(10px);
-    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-}
-
-/* ===== TEXTOS ===== */
-h2 {
-    margin-bottom: 10px;
 }
 
 #word {
@@ -59,7 +50,6 @@ h2 {
     margin: 20px 0;
 }
 
-/* ===== BOTONES ===== */
 .letters {
     display: flex;
     flex-wrap: wrap;
@@ -78,36 +68,11 @@ h2 {
     cursor: pointer;
     background: white;
     color: #333;
-    transition: 0.2s;
-    -webkit-tap-highlight-color: transparent;
 }
 
-.letters button:hover {
-    transform: scale(1.1);
-}
+.correct { background: #4CAF50 !important; color: white; }
+.wrong { background: #f44336 !important; color: white; }
 
-.correct {
-    background: #4CAF50 !important;
-    color: white;
-}
-
-.wrong {
-    background: #f44336 !important;
-    color: white;
-}
-
-/* ===== RESULTADOS ===== */
-#result {
-    font-size: 18px;
-    margin-top: 15px;
-    min-height: 25px;
-}
-
-#coins {
-    margin-top: 10px;
-}
-
-/* ===== BARRA PROGRESO ===== */
 #progress {
     height: 10px;
     margin-top: 15px;
@@ -120,53 +85,62 @@ h2 {
     height: 100%;
     width: 0%;
     background: #00ffcc;
-    transition: width 0.3s;
 }
 
-/* ===== MOBILE EXTRA ===== */
-@media (max-width: 480px) {
-    #word {
-        font-size: 9vw;
-    }
-
-    .letters button {
-        width: 13vw;
-        height: 13vw;
-    }
+#coinRain {
+    position: fixed;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
 }
 
+.coin {
+    position: absolute;
+    top: -50px;
+    font-size: 24px;
+    animation: fall linear forwards;
+}
+
+@keyframes fall {
+    to { transform: translateY(100vh); opacity: 0; }
+}
 </style>
 </head>
 
 <body>
 
 <div id="gameBox">
-
     <h2>🎮 Enlazados Game</h2>
-    <p>Adivina el elemento de seguridad</p>
+    <p id="hint"></p>
 
     <div id="word"></div>
-
     <div class="letters" id="letters"></div>
 
-    <div id="progress">
-        <div id="bar"></div>
-    </div>
+    <div id="progress"><div id="bar"></div></div>
 
     <div id="result"></div>
     <div id="coins">🪙 Monedas: 0</div>
-
 </div>
+
+<div id="coinRain"></div>
 
 <script>
 
-/* ===== DATOS ===== */
-const words = ["CASCO", "ARNES", "BOTAS"];
-let word = words[Math.floor(Math.random() * words.length)];
+/* ===== DATA ===== */
+const words = [
+  { palabra: "CASCO", pista: "Protección para la cabeza" },
+  { palabra: "ARNES", pista: "Evita caídas en alturas" },
+  { palabra: "BOTAS", pista: "Protección para los pies" },
+  { palabra: "GUANTES", pista: "Protegen las manos" },
+  { palabra: "GAFAS", pista: "Protección visual" },
+  { palabra: "CHALECO", pista: "Alta visibilidad en obra" }
+];
 
-let hidden = Array(word.length).fill("_");
+let current, word, hidden;
 let coins = 0;
 let correctCount = 0;
+let startTime = Date.now();
 
 /* ===== ELEMENTOS ===== */
 const wordDiv = document.getElementById("word");
@@ -174,15 +148,34 @@ const lettersDiv = document.getElementById("letters");
 const resultDiv = document.getElementById("result");
 const coinsDiv = document.getElementById("coins");
 const bar = document.getElementById("bar");
+const hintDiv = document.getElementById("hint");
 
 /* ===== FUNCIONES ===== */
+
+function nuevaPalabra() {
+    lettersDiv.innerHTML = "";
+    resultDiv.innerHTML = "";
+
+    current = words[Math.floor(Math.random() * words.length)];
+    word = current.palabra;
+    hidden = Array(word.length).fill("_");
+
+    correctCount = 0;
+    startTime = Date.now();
+
+    hintDiv.innerText = current.pista;
+
+    renderWord();
+    updateProgress();
+    createLetters();
+}
+
 function renderWord() {
     wordDiv.innerText = hidden.join(" ");
 }
 
 function updateProgress() {
-    const percent = (correctCount / word.length) * 100;
-    bar.style.width = percent + "%";
+    bar.style.width = (correctCount / word.length * 100) + "%";
 }
 
 function createLetters() {
@@ -191,19 +184,28 @@ function createLetters() {
     alphabet.split("").forEach(letter => {
         const btn = document.createElement("button");
         btn.innerText = letter;
-
         btn.onclick = () => checkLetter(letter, btn);
-
         lettersDiv.appendChild(btn);
     });
 }
 
+function lanzarMonedas() {
+    const container = document.getElementById("coinRain");
+
+    for (let i = 0; i < 25; i++) {
+        const coin = document.createElement("div");
+        coin.classList.add("coin");
+        coin.innerText = "🪙";
+        coin.style.left = Math.random() * 100 + "vw";
+        coin.style.animationDuration = (Math.random() * 2 + 2) + "s";
+        container.appendChild(coin);
+        setTimeout(() => coin.remove(), 3000);
+    }
+}
+
 function checkLetter(letter, btn) {
 
-    // 📊 Evento: click letra
-    gtag('event', 'click_letra', {
-        letra: letter
-    });
+    gtag('event', 'click_letra', { letra: letter });
 
     btn.disabled = true;
 
@@ -230,26 +232,39 @@ function checkLetter(letter, btn) {
 
     if (hidden.join("") === word) {
 
-        resultDiv.innerHTML = "🎉 ¡Ganaste! +10 monedas";
+        const tiempo = Math.floor((Date.now() - startTime) / 1000);
 
+        resultDiv.innerHTML = "🎉 ¡Ganaste! +10 monedas";
         coins += 10;
         coinsDiv.innerText = "🪙 Monedas: " + coins;
 
-        // 📊 Evento: juego completado
+        lanzarMonedas();
+
+        // 📊 Evento básico
         gtag('event', 'juego_completado', {
             palabra: word,
             monedas: coins
         });
+
+        // 🚀 EVENTO PRO
+        gtag('event', 'fin_nivel', {
+            resultado: 'ganado',
+            palabra: word,
+            monedas_totales: coins,
+            tiempo_segundos: tiempo,
+            longitud_palabra: word.length
+        });
+
+        // 👉 siguiente nivel automático
+        setTimeout(nuevaPalabra, 2000);
     }
 }
 
-/* ===== INIT ===== */
+/* ===== TRACK INICIO ===== */
 window.onload = () => {
     gtag('event', 'inicio_juego');
+    nuevaPalabra();
 };
-
-renderWord();
-createLetters();
 
 </script>
 
