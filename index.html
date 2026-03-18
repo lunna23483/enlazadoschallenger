@@ -12,98 +12,90 @@ window.dataLayer = window.dataLayer || [];
 function gtag(){dataLayer.push(arguments);}
 
 gtag('js', new Date());
-
-gtag('config', 'G-Y5WC0FBFZZ', {
-  page_title: 'Juego Enlazados',
-  page_location: window.location.href
-});
+gtag('config', 'G-Y5WC0FBFZZ');
 </script>
 
 <style>
-html, body {
-    height: 100%;
-    margin: 0;
-    font-family: 'Segoe UI';
-}
-
 body {
-    display: flex;
-    justify-content: center;
-    align-items: center;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    height:100vh;
+    margin:0;
+    font-family:'Segoe UI';
     background: linear-gradient(to top, #4facfe, #00f2fe);
-    color: white;
-    text-align: center;
+    color:white;
+    text-align:center;
 }
 
 #gameBox {
-    width: 90%;
-    max-width: 420px;
-    padding: 20px;
-    border-radius: 20px;
-    background: rgba(255,255,255,0.1);
-    backdrop-filter: blur(10px);
+    width:90%;
+    max-width:420px;
+    padding:20px;
+    border-radius:20px;
+    background:rgba(255,255,255,0.1);
+    backdrop-filter:blur(10px);
 }
 
 #word {
-    font-size: 8vw;
-    letter-spacing: 10px;
-    margin: 20px 0;
+    font-size:8vw;
+    letter-spacing:10px;
+    margin:20px 0;
 }
 
 .letters {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
+    display:flex;
+    flex-wrap:wrap;
+    justify-content:center;
 }
 
 .letters button {
-    width: 12vw;
-    height: 12vw;
-    max-width: 55px;
-    max-height: 55px;
-    margin: 5px;
-    border: none;
-    border-radius: 10px;
-    font-size: 5vw;
-    cursor: pointer;
-    background: white;
-    color: #333;
+    width:12vw;
+    height:12vw;
+    max-width:55px;
+    max-height:55px;
+    margin:5px;
+    border:none;
+    border-radius:10px;
+    font-size:5vw;
+    cursor:pointer;
+    background:white;
+    color:#333;
 }
 
-.correct { background: #4CAF50 !important; color: white; }
-.wrong { background: #f44336 !important; color: white; }
+.correct { background:#4CAF50 !important; color:white; }
+.wrong { background:#f44336 !important; color:white; }
 
 #progress {
-    height: 10px;
-    margin-top: 15px;
-    border-radius: 10px;
-    background: rgba(255,255,255,0.2);
-    overflow: hidden;
+    height:10px;
+    margin-top:15px;
+    border-radius:10px;
+    background:rgba(255,255,255,0.2);
 }
 
 #bar {
-    height: 100%;
-    width: 0%;
-    background: #00ffcc;
+    height:100%;
+    width:0%;
+    background:#00ffcc;
 }
 
 #coinRain {
-    position: fixed;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
+    position:fixed;
+    top:0;
+    width:100%;
+    height:100%;
+    pointer-events:none;
 }
 
 .coin {
-    position: absolute;
-    top: -50px;
-    font-size: 24px;
-    animation: fall linear forwards;
+    position:absolute;
+    top:-50px;
+    font-size:24px;
+    animation:fall linear forwards;
 }
 
 @keyframes fall {
-    to { transform: translateY(100vh); opacity: 0; }
+    to { transform: translateY(100vh); opacity:0; }
 }
 </style>
 </head>
@@ -112,8 +104,8 @@ body {
 
 <div id="gameBox">
     <h2>🎮 Enlazados Game</h2>
-    <p id="hint"></p>
 
+    <div id="level"></div>
     <div id="word"></div>
     <div class="letters" id="letters"></div>
 
@@ -127,17 +119,18 @@ body {
 
 <script>
 
-/* ===== DATA ===== */
-const words = [
-  { palabra: "CASCO", pista: "Protección para la cabeza" },
-  { palabra: "ARNES", pista: "Evita caídas en alturas" },
-  { palabra: "BOTAS", pista: "Protección para los pies" },
-  { palabra: "GUANTES", pista: "Protegen las manos" },
-  { palabra: "GAFAS", pista: "Protección visual" },
-  { palabra: "CHALECO", pista: "Alta visibilidad en obra" }
+/* ===== NIVELES ===== */
+const levels = [
+  "CASCO",
+  "ARNES",
+  "BOTAS",
+  "GUANTES",
+  "GAFAS",
+  "CHALECO"
 ];
 
-let current, word, hidden;
+let currentLevel = 0;
+let word, hidden;
 let coins = 0;
 let correctCount = 0;
 let startTime = Date.now();
@@ -148,22 +141,27 @@ const lettersDiv = document.getElementById("letters");
 const resultDiv = document.getElementById("result");
 const coinsDiv = document.getElementById("coins");
 const bar = document.getElementById("bar");
-const hintDiv = document.getElementById("hint");
+const levelDiv = document.getElementById("level");
 
 /* ===== FUNCIONES ===== */
 
-function nuevaPalabra() {
+function iniciarNivel() {
+
+    if (currentLevel >= levels.length) {
+        finDelJuego();
+        return;
+    }
+
     lettersDiv.innerHTML = "";
     resultDiv.innerHTML = "";
 
-    current = words[Math.floor(Math.random() * words.length)];
-    word = current.palabra;
+    word = levels[currentLevel];
     hidden = Array(word.length).fill("_");
 
     correctCount = 0;
     startTime = Date.now();
 
-    hintDiv.innerText = current.pista;
+    levelDiv.innerText = "Nivel " + (currentLevel + 1);
 
     renderWord();
     updateProgress();
@@ -192,7 +190,7 @@ function createLetters() {
 function lanzarMonedas() {
     const container = document.getElementById("coinRain");
 
-    for (let i = 0; i < 25; i++) {
+    for (let i = 0; i < 30; i++) {
         const coin = document.createElement("div");
         coin.classList.add("coin");
         coin.innerText = "🪙";
@@ -234,36 +232,44 @@ function checkLetter(letter, btn) {
 
         const tiempo = Math.floor((Date.now() - startTime) / 1000);
 
-        resultDiv.innerHTML = "🎉 ¡Ganaste! +10 monedas";
         coins += 10;
         coinsDiv.innerText = "🪙 Monedas: " + coins;
 
         lanzarMonedas();
 
-        // 📊 Evento básico
-        gtag('event', 'juego_completado', {
+        resultDiv.innerHTML = "🎉 Nivel superado";
+
+        // 📊 evento por nivel
+        gtag('event', 'nivel_completado', {
+            nivel: currentLevel + 1,
             palabra: word,
+            tiempo: tiempo,
             monedas: coins
         });
 
-        // 🚀 EVENTO PRO
-        gtag('event', 'fin_nivel', {
-            resultado: 'ganado',
-            palabra: word,
-            monedas_totales: coins,
-            tiempo_segundos: tiempo,
-            longitud_palabra: word.length
-        });
+        currentLevel++;
 
-        // 👉 siguiente nivel automático
-        setTimeout(nuevaPalabra, 2000);
+        setTimeout(iniciarNivel, 2000);
     }
 }
 
-/* ===== TRACK INICIO ===== */
+/* ===== FINAL ===== */
+function finDelJuego() {
+
+    resultDiv.innerHTML = "🏆 ¡Completaste todos los niveles!";
+    lanzarMonedas();
+
+    // 🚀 EVENTO FINAL IMPORTANTE
+    gtag('event', 'juego_terminado', {
+        niveles: levels.length,
+        monedas_finales: coins
+    });
+}
+
+/* ===== INICIO ===== */
 window.onload = () => {
     gtag('event', 'inicio_juego');
-    nuevaPalabra();
+    iniciarNivel();
 };
 
 </script>
