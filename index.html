@@ -145,6 +145,7 @@ let currentLevel = 0;
 let word, hidden;
 let coins = 0;
 let correctCount = 0;
+let wrongCount = 0; // 🔥 NUEVO
 let startTime = Date.now();
 
 /* ===== ELEMENTOS ===== */
@@ -171,6 +172,7 @@ function iniciarNivel() {
     hidden = Array(word.length).fill("_");
 
     correctCount = 0;
+    wrongCount = 0; // 🔥 RESET ERRORES
     startTime = Date.now();
 
     levelDiv.innerText = "Nivel " + (currentLevel + 1);
@@ -213,6 +215,21 @@ function lanzarMonedas() {
     }
 }
 
+function reiniciarNivel() {
+
+    resultDiv.innerHTML = "💀 Perdiste... reiniciando nivel";
+
+    // 📊 evento de derrota
+    gtag('event', 'nivel_perdido', {
+        nivel: currentLevel + 1,
+        errores: wrongCount
+    });
+
+    setTimeout(() => {
+        iniciarNivel();
+    }, 2000);
+}
+
 function checkLetter(letter, btn) {
 
     gtag('event', 'click_letra', { letra: letter });
@@ -234,11 +251,18 @@ function checkLetter(letter, btn) {
         coins += 2;
     } else {
         btn.classList.add("wrong");
+        wrongCount++; // 🔥 SUMA ERROR
     }
 
     renderWord();
     updateProgress();
     coinsDiv.innerText = "🪙 Monedas: " + coins;
+
+    // 💣 SI FALLA 3 VECES → REINICIO
+    if (wrongCount >= 3) {
+        reiniciarNivel();
+        return;
+    }
 
     if (hidden.join("") === word) {
 
@@ -271,7 +295,6 @@ function finDelJuego() {
     resultDiv.innerHTML = "🏆 ¡Completaste todos los niveles!";
     lanzarMonedas();
 
-    // 🚀 EVENTO FINAL
     gtag('event', 'juego_terminado', {
         niveles: levels.length,
         monedas_finales: coins
@@ -285,6 +308,3 @@ window.onload = () => {
 };
 
 </script>
-
-</body>
-</html>
