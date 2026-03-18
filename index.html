@@ -2,43 +2,64 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Reto Enlazado</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Juego Enlazados</title>
 
 <!-- 🔥 GOOGLE ANALYTICS -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-Y5WC0FBFZZ"></script>
 <script>
 window.dataLayer = window.dataLayer || [];
 function gtag(){dataLayer.push(arguments);}
+
 gtag('js', new Date());
-gtag('config', 'G-Y5WC0FBFZZ');
+
+gtag('config', 'G-Y5WC0FBFZZ', {
+  page_title: 'Juego Enlazados',
+  page_location: window.location.href
+});
 </script>
 
 <style>
-body {
+
+/* ===== RESET Y BASE ===== */
+html, body {
+    height: 100%;
     margin: 0;
     font-family: 'Segoe UI';
-    background: linear-gradient(to top, #4facfe, #00f2fe);
-    text-align: center;
-    color: white;
-    overflow-x: hidden;
 }
 
+body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: linear-gradient(to top, #4facfe, #00f2fe);
+    color: white;
+    text-align: center;
+}
+
+/* ===== CONTENEDOR ===== */
 #gameBox {
-    margin: 30px auto;
     width: 90%;
-    max-width: 400px;
-    background: rgba(255,255,255,0.1);
+    max-width: 420px;
     padding: 20px;
     border-radius: 20px;
+    background: rgba(255,255,255,0.1);
     backdrop-filter: blur(10px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+}
+
+/* ===== TEXTOS ===== */
+h2 {
+    margin-bottom: 10px;
 }
 
 #word {
-    font-size: 32px;
-    letter-spacing: 12px;
+    font-size: 8vw;
+    letter-spacing: 10px;
     margin: 20px 0;
 }
 
+/* ===== BOTONES ===== */
 .letters {
     display: flex;
     flex-wrap: wrap;
@@ -46,88 +67,122 @@ body {
 }
 
 .letters button {
-    width: 45px;
-    height: 45px;
+    width: 12vw;
+    height: 12vw;
+    max-width: 55px;
+    max-height: 55px;
     margin: 5px;
     border: none;
     border-radius: 10px;
-    font-size: 18px;
+    font-size: 5vw;
     cursor: pointer;
     background: white;
     color: #333;
+    transition: 0.2s;
+    -webkit-tap-highlight-color: transparent;
 }
 
-.correct { background: #4CAF50 !important; color: white; }
-.wrong { background: #f44336 !important; color: white; }
+.letters button:hover {
+    transform: scale(1.1);
+}
+
+.correct {
+    background: #4CAF50 !important;
+    color: white;
+}
+
+.wrong {
+    background: #f44336 !important;
+    color: white;
+}
+
+/* ===== RESULTADOS ===== */
+#result {
+    font-size: 18px;
+    margin-top: 15px;
+    min-height: 25px;
+}
 
 #coins {
-    font-size: 20px;
     margin-top: 10px;
 }
 
-#level {
-    margin-top: 10px;
-    font-size: 16px;
+/* ===== BARRA PROGRESO ===== */
+#progress {
+    height: 10px;
+    margin-top: 15px;
+    border-radius: 10px;
+    background: rgba(255,255,255,0.2);
+    overflow: hidden;
 }
 
-/* 💰 MONEDAS */
-.coin {
-    position: fixed;
-    top: -50px;
-    font-size: 24px;
-    animation: fall linear forwards;
+#bar {
+    height: 100%;
+    width: 0%;
+    background: #00ffcc;
+    transition: width 0.3s;
 }
 
-@keyframes fall {
-    to {
-        transform: translateY(100vh);
-        opacity: 0;
+/* ===== MOBILE EXTRA ===== */
+@media (max-width: 480px) {
+    #word {
+        font-size: 9vw;
+    }
+
+    .letters button {
+        width: 13vw;
+        height: 13vw;
     }
 }
-</style>
 
+</style>
 </head>
 
 <body>
 
-<h2>🎮 Reto Enlazado</h2>
-
 <div id="gameBox">
-    <div id="level">Nivel 1</div>
+
+    <h2>🎮 Enlazados Game</h2>
+    <p>Adivina el elemento de seguridad</p>
+
     <div id="word"></div>
+
     <div class="letters" id="letters"></div>
-    <div id="coins">🪙 0</div>
+
+    <div id="progress">
+        <div id="bar"></div>
+    </div>
+
+    <div id="result"></div>
+    <div id="coins">🪙 Monedas: 0</div>
+
 </div>
 
 <script>
-const words = ["CASCO", "ARNES", "BOTAS", "GUANTES", "CHALECO"];
-let currentIndex = 0;
 
-let word = words[currentIndex];
-let hidden = [];
+/* ===== DATOS ===== */
+const words = ["CASCO", "ARNES", "BOTAS"];
+let word = words[Math.floor(Math.random() * words.length)];
+
+let hidden = Array(word.length).fill("_");
 let coins = 0;
+let correctCount = 0;
 
+/* ===== ELEMENTOS ===== */
 const wordDiv = document.getElementById("word");
 const lettersDiv = document.getElementById("letters");
+const resultDiv = document.getElementById("result");
 const coinsDiv = document.getElementById("coins");
-const levelDiv = document.getElementById("level");
+const bar = document.getElementById("bar");
 
-function startWord() {
-    word = words[currentIndex];
-    hidden = Array(word.length).fill("_");
-    lettersDiv.innerHTML = "";
-    renderWord();
-    createLetters();
-    levelDiv.innerText = "Nivel " + (currentIndex + 1);
-
-    // 📊 Evento inicio nivel
-    gtag('event', 'nivel_inicio', {
-        nivel: currentIndex + 1
-    });
-}
-
+/* ===== FUNCIONES ===== */
 function renderWord() {
     wordDiv.innerText = hidden.join(" ");
+}
+
+function updateProgress() {
+    const percent = (correctCount / word.length) * 100;
+    bar.style.width = percent + "%";
 }
 
 function createLetters() {
@@ -143,86 +198,59 @@ function createLetters() {
     });
 }
 
-/* 💰 LLUVIA DE MONEDAS */
-function dropCoins() {
-    for (let i = 0; i < 20; i++) {
-        let coin = document.createElement("div");
-        coin.innerText = "🪙";
-        coin.classList.add("coin");
-
-        coin.style.left = Math.random() * 100 + "vw";
-        coin.style.animationDuration = (Math.random() * 2 + 1) + "s";
-
-        document.body.appendChild(coin);
-
-        setTimeout(() => coin.remove(), 3000);
-    }
-}
-
 function checkLetter(letter, btn) {
+
+    // 📊 Evento: click letra
+    gtag('event', 'click_letra', {
+        letra: letter
+    });
+
     btn.disabled = true;
+
     let correct = false;
 
     for (let i = 0; i < word.length; i++) {
         if (word[i] === letter && hidden[i] === "_") {
             hidden[i] = letter;
             correct = true;
+            correctCount++;
         }
     }
 
     if (correct) {
         btn.classList.add("correct");
         coins += 2;
-
-        // 📊 Evento letra correcta
-        gtag('event', 'letra_correcta', {
-            letra: letter
-        });
-
     } else {
         btn.classList.add("wrong");
     }
 
     renderWord();
-    coinsDiv.innerText = "🪙 " + coins;
+    updateProgress();
+    coinsDiv.innerText = "🪙 Monedas: " + coins;
 
     if (hidden.join("") === word) {
+
+        resultDiv.innerHTML = "🎉 ¡Ganaste! +10 monedas";
+
         coins += 10;
-        coinsDiv.innerText = "🪙 " + coins;
+        coinsDiv.innerText = "🪙 Monedas: " + coins;
 
-        dropCoins();
-
-        // 📊 Evento nivel completado
-        gtag('event', 'nivel_completado', {
-            nivel: currentIndex + 1,
+        // 📊 Evento: juego completado
+        gtag('event', 'juego_completado', {
+            palabra: word,
             monedas: coins
         });
-
-        setTimeout(() => {
-            nextWord();
-        }, 1200);
     }
 }
 
-function nextWord() {
-    currentIndex++;
+/* ===== INIT ===== */
+window.onload = () => {
+    gtag('event', 'inicio_juego');
+};
 
-    if (currentIndex >= words.length) {
+renderWord();
+createLetters();
 
-        // 📊 Evento juego terminado
-        gtag('event', 'juego_terminado', {
-            monedas_totales: coins
-        });
-
-        alert("🏆 Terminaste! Total monedas: " + coins);
-        currentIndex = 0;
-        coins = 0;
-    }
-
-    startWord();
-}
-
-startWord();
 </script>
 
 </body>
